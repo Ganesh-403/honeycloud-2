@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HoneyCloud-X Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body class="bg-gray-900 text-white">
+    <div class="container mx-auto p-6">
+        <!-- Header with Logout -->
+        <header class="mb-8 flex justify-between items-center border-b border-cyan-500 pb-4">
+            <div>
+                <h1 class="text-5xl font-bold text-cyan-400 mb-2">🛡️ HoneyCloud-X Admin</h1>
+                <p class="text-gray-400 text-lg">System Management & Control Panel</p>
+            </div>
+            <div class="text-right">
+                <p class="text-sm text-gray-500">Welcome, <span id="userName" class="text-cyan-400 font-bold">User</span></p>
+                <p class="text-xs text-green-400" id="systemStatus">● System Online</p>
+                <p class="text-xs text-gray-500 mt-2" id="lastUpdate">Last updated: Just now</p>
+                <button onclick="logout()" class="mt-3 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm transition">
+                    🚪 Logout
+                </button>
+            </div>
+        </header>
+
+        <!-- Quick Actions -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <!-- Generate Reports Card -->
+            <div class="bg-gray-800 p-6 rounded-lg shadow-xl border border-cyan-500 hover:border-cyan-400 transition">
+                <h3 class="text-2xl font-bold text-cyan-400 mb-4">📄 Generate Reports</h3>
+                <div class="space-y-3">
+                    <button onclick="generateReport('csv', false)" 
+                            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded transition">
+                        📊 Download CSV Report
+                    </button>
+                    <button onclick="generateReport('xlsx', false)" 
+                            class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded transition">
+                        📑 Download Excel Report
+                    </button>
+                    <button onclick="generateReport('csv', true)" 
+                            class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded transition">
+                        📱 Send to Telegram
+                    </button>
+                </div>
+            </div>
+
+            <!-- Alerts & Notifications -->
+            <div class="bg-gray-800 p-6 rounded-lg shadow-xl border border-green-500 hover:border-green-400 transition">
+                <h3 class="text-2xl font-bold text-green-400 mb-4">🔔 Alerts & Notifications</h3>
+                <div class="space-y-3">
+                    <button onclick="testTelegramAlert()" 
+                            class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded transition">
+                        ✉️ Send Test Telegram Alert
+                    </button>
+                    <button onclick="testEmailAlert()" 
+                            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded transition">
+                        📧 Send Test Email Alert
+                    </button>
+                    <button onclick="viewMonitoring()" 
+                            class="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-4 rounded transition">
+                        📊 View Monitoring
+                    </button>
+                </div>
+            </div>
+
+            <!-- System Info Card -->
+            <div class="bg-gray-800 p-6 rounded-lg shadow-xl border border-yellow-500 hover:border-yellow-400 transition">
+                <h3 class="text-2xl font-bold text-yellow-400 mb-4">⚙️ System Status</h3>
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">API Status:</span>
+                        <span class="text-green-400" id="apiStatus">● Online</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">Total Events:</span>
+                        <span class="text-white font-bold" id="totalEventsCount">Loading...</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">Critical Alerts:</span>
+                        <span class="text-red-400 font-bold" id="criticalCount">Loading...</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">Malicious Events:</span>
+                        <span class="text-orange-400 font-bold" id="maliciousCount">Loading...</span>
+                    </div>
+                    <button onclick="refreshStats()" 
+                            class="w-full mt-4 bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded transition">
+                        🔄 Refresh Status
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notifications Area -->
+        <div id="notifications" class="mb-8"></div>
+
+        <!-- Stats Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+                <div class="text-gray-400 text-sm mb-1">SSH Events</div>
+                <div class="text-3xl font-bold text-cyan-400" id="sshCount">0</div>
+            </div>
+            <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+                <div class="text-gray-400 text-sm mb-1">FTP Events</div>
+                <div class="text-3xl font-bold text-blue-400" id="ftpCount">0</div>
+            </div>
+            <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+                <div class="text-gray-400 text-sm mb-1">HTTP Events</div>
+                <div class="text-3xl font-bold text-green-400" id="httpCount">0</div>
+            </div>
+            <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+                <div class="text-gray-400 text-sm mb-1">Benign Events</div>
+                <div class="text-3xl font-bold text-yellow-400" id="benignCount">0</div>
+            </div>
+        </div>
+
+        <!-- Recent Actions Log -->
+        <div class="bg-gray-800 p-6 rounded-lg shadow-xl border border-gray-700 mb-8">
+            <h3 class="text-2xl font-bold text-cyan-400 mb-4">📜 Recent Admin Actions</h3>
+            <div id="actionsLog" class="space-y-2 max-h-64 overflow-y-auto">
+                <p class="text-gray-500 text-sm">No recent actions</p>
+            </div>
+        </div>
+
+        <!-- Quick Links -->
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <a href="javascript:viewMonitoring()" 
+               class="bg-gradient-to-br from-cyan-600 to-cyan-700 hover:from-cyan-500 hover:to-cyan-600 p-4 rounded-lg text-center transition border border-cyan-500 shadow-lg">
+                <div class="text-3xl mb-2">📊</div>
+                <div class="font-bold">Monitoring</div>
+            </a>
+            <a href="http://localhost:8000/docs" target="_blank" 
+               class="bg-gray-800 hover:bg-gray-700 p-4 rounded-lg text-center transition border border-gray-700">
+                <div class="text-3xl mb-2">📚</div>
+                <div class="font-bold">API Docs</div>
+            </a>
+            <a href="http://localhost:8000/api/events" target="_blank" 
+               class="bg-gray-800 hover:bg-gray-700 p-4 rounded-lg text-center transition border border-gray-700">
+                <div class="text-3xl mb-2">🔍</div>
+                <div class="font-bold">View Events</div>
+            </a>
+            <a href="http://localhost:8000/api/stats" target="_blank" 
+               class="bg-gray-800 hover:bg-gray-700 p-4 rounded-lg text-center transition border border-gray-700">
+                <div class="text-3xl mb-2">📈</div>
+                <div class="font-bold">Statistics</div>
+            </a>
+            <a href="http://localhost:8000/health" target="_blank" 
+               class="bg-gray-800 hover:bg-gray-700 p-4 rounded-lg text-center transition border border-gray-700">
+                <div class="text-3xl mb-2">💚</div>
+                <div class="font-bold">Health Check</div>
+            </a>
+        </div>
+
+        <!-- Footer -->
+        <footer class="mt-12 pt-6 border-t border-gray-700 text-center text-gray-500 text-sm">
+            <p>HoneyCloud-X v1.0.0 | Smart Scalable Honeypot Platform</p>
+            <p class="mt-2">Backend API: <span id="apiUrl" class="text-gray-400">http://localhost:8000</span></p>
+        </footer>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8000';
+        let actionsLog = [];
+
+        // Check authentication on load
+        window.onload = function() {
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+            
+            if (!token) {
+                // Redirect to login if not authenticated
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            // Set username
+            document.getElementById('userName').textContent = user || 'User';
+            
+            // Initialize dashboard
+            refreshStats();
+            logAction('Admin dashboard loaded', 'success');
+            
+            // Auto-refresh stats every 30 seconds
+            setInterval(refreshStats, 30000);
+        };
+
+        // Get authorization header with token
+        function getAuthHeader() {
+            const token = localStorage.getItem('token');
+            return {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            };
+        }
+
+        // Logout function
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            localStorage.removeItem('role');
+            logAction('User logged out', 'info');
+            window.location.href = 'login.html';
+        }
+
+        // Log action
+        function logAction(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            actionsLog.unshift({
+                time: timestamp,
+                message: message,
+                type: type
+            });
+            
+            if (actionsLog.length > 15) actionsLog.pop();
+            updateActionsLog();
+        }
+
+        // Update actions log display
+        function updateActionsLog() {
+            const logDiv = document.getElementById('actionsLog');
+            if (actionsLog.length === 0) {
+                logDiv.innerHTML = '<p class="text-gray-500 text-sm">No recent actions</p>';
+                return;
+            }
+            
+            logDiv.innerHTML = actionsLog.map(action => {
+                const colorClass = action.type === 'success' ? 'text-green-400' : 
+                                  action.type === 'error' ? 'text-red-400' : 'text-gray-300';
+                return `<div class="${colorClass} text-sm">[${action.time}] ${action.message}</div>`;
+            }).join('');
+        }
+
+        // Show notification
+        function showNotification(message, type = 'info') {
+            const notifDiv = document.getElementById('notifications');
+            const colors = {
+                success: 'bg-green-600',
+                error: 'bg-red-600',
+                info: 'bg-blue-600'
+            };
+            
+            const notification = document.createElement('div');
+            notification.className = `${colors[type]} text-white px-6 py-4 rounded-lg mb-4 shadow-lg`;
+            notification.innerHTML = `
+                <div class="flex justify-between items-center">
+                    <span>${message}</span>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-xl">&times;</button>
+                </div>
+            `;
+            
+            notifDiv.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 5000);
+        }
+
+        // Generate Report with authentication
+       // In frontend/index.html, update this function:
+async function generateReport(format, sendTelegram) {
+    try {
+        showNotification('Generating report...', 'info');
+        logAction(`Generating ${format.toUpperCase()} report...`, 'info');
+        
+        const response = await fetch(
+            `${API_URL}/api/reports/generate?format=${format}&send_telegram=${sendTelegram}`, 
+            {
+                method: 'POST',
+                headers: getAuthHeader()
+            }
+        );
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showNotification(data.message, 'success');
+            logAction(data.message, 'success');
+            
+            if (!sendTelegram) {
+                // Download with auth token
+                const token = localStorage.getItem('token');
+                const downloadUrl = `${API_URL}${data.download_url}&token=${token}`;
+                window.open(downloadUrl, '_blank');
+                logAction('Report downloaded', 'success');
+            } else {
+                logAction('Report sent to Telegram', 'success');
+            }
+        } else {
+            throw new Error(data.detail || 'Failed to generate report');
+        }
+    } catch (error) {
+        showNotification(`Error: ${error.message}`, 'error');
+        logAction(`Error: ${error.message}`, 'error');
+    }
+}
+
+        // Test Telegram Alert
+        async function testTelegramAlert() {
+            try {
+                showNotification('Sending test alert to Telegram...', 'info');
+                logAction('Sending test Telegram alert...', 'info');
+                
+                const response = await fetch(`${API_URL}/api/events`, {
+                    headers: getAuthHeader()
+                });
+                const events = await response.json();
+                
+                const criticalEvent = events.find(e => e.severity === 'CRITICAL');
+                
+                if (criticalEvent) {
+                    showNotification('✅ Test alert sent! Check your Telegram 📱', 'success');
+                    logAction('Test Telegram alert sent', 'success');
+                } else {
+                    showNotification('⚠️ No critical events to send', 'info');
+                }
+            } catch (error) {
+                showNotification(`Error: ${error.message}`, 'error');
+                logAction(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Test Email Alert
+        async function testEmailAlert() {
+            try {
+                showNotification('Email alert feature - configure in backend', 'info');
+                logAction('Email alert test - check backend configuration', 'info');
+            } catch (error) {
+                showNotification(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Refresh Stats with authentication
+        async function refreshStats() {
+            try {
+                document.getElementById('apiStatus').innerHTML = '⏳ Checking...';
+                
+                const response = await fetch(`${API_URL}/api/stats`, {
+                    headers: getAuthHeader()
+                });
+                
+                if (!response.ok && response.status === 401) {
+                    // Token expired, redirect to login
+                    localStorage.removeItem('token');
+                    window.location.href = 'login.html';
+                    return;
+                }
+                
+                const stats = await response.json();
+                
+                document.getElementById('totalEventsCount').textContent = stats.total_events;
+                document.getElementById('criticalCount').textContent = stats.events_by_severity.CRITICAL || 0;
+                document.getElementById('maliciousCount').textContent = stats.ai_labels.malicious || 0;
+                
+                // Service counts
+                document.getElementById('sshCount').textContent = stats.events_by_service.SSH || 0;
+                document.getElementById('ftpCount').textContent = stats.events_by_service.FTP || 0;
+                document.getElementById('httpCount').textContent = stats.events_by_service.HTTP || 0;
+                document.getElementById('benignCount').textContent = stats.ai_labels.benign || 0;
+                
+                document.getElementById('apiStatus').innerHTML = '● Online';
+                document.getElementById('systemStatus').innerHTML = '● System Online';
+                document.getElementById('lastUpdate').textContent = 'Last updated: ' + new Date().toLocaleTimeString();
+                
+                logAction('System stats refreshed', 'success');
+            } catch (error) {
+                document.getElementById('apiStatus').innerHTML = '● Offline';
+                document.getElementById('systemStatus').innerHTML = '● System Offline';
+                logAction('Failed to refresh stats', 'error');
+            }
+        }
+
+        // Quick navigation
+        function viewMonitoring() {
+            window.location.href = 'dashboard.html';
+            logAction('Navigated to monitoring dashboard', 'info');
+        }
+
+        function viewAPIDoc() {
+            window.open(`${API_URL}/docs`, '_blank');
+            logAction('Opened API documentation', 'info');
+        }
+    </script>
+</body>
+</html>

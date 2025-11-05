@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HoneyCloud-X Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body class="bg-gray-900 text-white">
+    <div class="container mx-auto p-6">
+        <!-- Header -->
+        <header class="mb-8">
+            <h1 class="text-5xl font-bold text-cyan-400 mb-2">🍯 HoneyCloud-X Dashboard</h1>
+            <p class="text-gray-400 text-lg">Smart Scalable Honeypot Platform for Cloud Security</p>
+            <div class="mt-2">
+                <span class="text-sm text-green-400" id="status">● Connected to API</span>
+            </div>
+        </header>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-gray-800 p-6 rounded-lg shadow-xl border border-gray-700">
+                <h3 class="text-gray-400 text-sm mb-2">Total Events</h3>
+                <p class="text-4xl font-bold text-cyan-400" id="totalEvents">
+                    <span class="text-gray-600">Loading...</span>
+                </p>
+            </div>
+            <div class="bg-gray-800 p-6 rounded-lg shadow-xl border border-gray-700">
+                <h3 class="text-gray-400 text-sm mb-2">Critical Threats</h3>
+                <p class="text-4xl font-bold text-red-400" id="criticalEvents">
+                    <span class="text-gray-600">--</span>
+                </p>
+            </div>
+            <div class="bg-gray-800 p-6 rounded-lg shadow-xl border border-gray-700">
+                <h3 class="text-gray-400 text-sm mb-2">Malicious AI Detected</h3>
+                <p class="text-4xl font-bold text-orange-400" id="maliciousAI">
+                    <span class="text-gray-600">--</span>
+                </p>
+            </div>
+            <div class="bg-gray-800 p-6 rounded-lg shadow-xl border border-gray-700">
+                <h3 class="text-gray-400 text-sm mb-2">Services Active</h3>
+                <p class="text-4xl font-bold text-green-400">3</p>
+                <p class="text-xs text-gray-500 mt-1">SSH • FTP • HTTP</p>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <div class="bg-gray-800 p-6 rounded-lg shadow-xl border border-gray-700">
+                <h3 class="text-2xl font-bold mb-4 text-cyan-400">📊 Events by Service</h3>
+                <canvas id="serviceChart" style="max-height: 300px;"></canvas>
+            </div>
+            <div class="bg-gray-800 p-6 rounded-lg shadow-xl border border-gray-700">
+                <h3 class="text-2xl font-bold mb-4 text-cyan-400">⚠️ Severity Distribution</h3>
+                <canvas id="severityChart" style="max-height: 300px;"></canvas>
+            </div>
+        </div>
+
+        <!-- AI Detection Summary -->
+        <div class="bg-gray-800 p-6 rounded-lg shadow-xl border border-gray-700 mb-8">
+            <h3 class="text-2xl font-bold mb-4 text-cyan-400">🤖 AI Threat Classification</h3>
+            <div class="grid grid-cols-3 gap-4">
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-green-400" id="benignCount">--</div>
+                    <div class="text-sm text-gray-400 mt-1">Benign</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-yellow-400" id="anomalyCount">--</div>
+                    <div class="text-sm text-gray-400 mt-1">Anomaly</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-red-400" id="maliciousCount">--</div>
+                    <div class="text-sm text-gray-400 mt-1">Malicious</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- LIVE EVENT FEED -->
+        <div class="bg-gray-800 p-6 rounded-lg shadow-xl border border-green-500 mb-8">
+            <h2 class="text-2xl font-bold text-green-400 mb-4">🔴 Live Event Feed (Real-time)</h2>
+            <div id="liveEvents" class="space-y-3 max-h-96 overflow-y-auto">
+                <div class="text-gray-500 text-sm p-3">Waiting for new events...</div>
+            </div>
+        </div>
+
+        <!-- RISK HEATMAP -->
+        <div class="bg-gray-800 p-6 rounded-lg shadow-xl border border-red-500 mb-8">
+            <h2 class="text-2xl font-bold text-red-400 mb-4">📊 Risk Heatmap (Last 24 Hours)</h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div id="riskMetrics" class="col-span-4">
+                    <div class="text-gray-500 text-sm">Loading risk metrics...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Events Table -->
+        <div class="bg-gray-800 rounded-lg shadow-xl border border-gray-700 p-6">
+            <h2 class="text-3xl font-bold mb-6 text-cyan-400">🔴 Live Attack Events</h2>
+            <div class="mb-4">
+                <span class="text-sm text-gray-400">Auto-refreshing every 5 seconds</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b-2 border-gray-700">
+                            <th class="p-3 text-left text-gray-400">Timestamp</th>
+                            <th class="p-3 text-left text-gray-400">Service</th>
+                            <th class="p-3 text-left text-gray-400">Source IP</th>
+                            <th class="p-3 text-left text-gray-400">Username</th>
+                            <th class="p-3 text-left text-gray-400">Severity</th>
+                            <th class="p-3 text-left text-gray-400">AI Label</th>
+                            <th class="p-3 text-left text-gray-400">Score</th>
+                        </tr>
+                    </thead>
+                    <tbody id="eventsBody">
+                        <tr>
+                            <td colspan="7" class="p-4 text-center text-gray-500">Loading events...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8000';
+        let serviceChart = null;
+        let severityChart = null;
+        let riskHistory = [];
+
+        // Check authentication on load
+        window.addEventListener('load', function() {
+            const token = localStorage.getItem('token');
+            
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            fetchData();
+            startLiveEventStream();
+            // Auto-refresh every 5 seconds
+            setInterval(fetchData, 5000);
+        });
+
+        // Get authorization header with token
+        function getAuthHeader() {
+            const token = localStorage.getItem('token');
+            return {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            };
+        }
+
+        // Fetch and update all data
+        async function fetchData() {
+            try {
+                document.getElementById('status').innerHTML = '● Connected to API';
+                document.getElementById('status').className = 'text-sm text-green-400';
+
+                // Fetch stats and events with auth header
+                const [statsResponse, eventsResponse] = await Promise.all([
+                    fetch(`${API_URL}/api/stats`, { headers: getAuthHeader() }),
+                    fetch(`${API_URL}/api/events?limit=20`, { headers: getAuthHeader() })
+                ]);
+
+                if (!statsResponse.ok || !eventsResponse.ok) {
+                    throw new Error('API request failed');
+                }
+
+                const stats = await statsResponse.json();
+                const events = await eventsResponse.json();
+
+                updateStats(stats);
+                updateCharts(stats);
+                updateTable(events);
+
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                document.getElementById('status').innerHTML = '● API Connection Error';
+                document.getElementById('status').className = 'text-sm text-red-400';
+            }
+        }
+
+        function updateStats(stats) {
+            document.getElementById('totalEvents').textContent = stats.total_events || 0;
+            document.getElementById('criticalEvents').textContent = stats.events_by_severity?.CRITICAL || 0;
+            document.getElementById('maliciousAI').textContent = stats.ai_labels?.malicious || 0;
+            
+            // AI labels
+            document.getElementById('benignCount').textContent = stats.ai_labels?.benign || 0;
+            document.getElementById('anomalyCount').textContent = stats.ai_labels?.anomaly || 0;
+            document.getElementById('maliciousCount').textContent = stats.ai_labels?.malicious || 0;
+        }
+
+        function updateCharts(stats) {
+            // Service Chart
+            const serviceCtx = document.getElementById('serviceChart').getContext('2d');
+            const serviceData = stats.events_by_service || {};
+            
+            if (serviceChart) {
+                serviceChart.destroy();
+            }
+            
+            serviceChart = new Chart(serviceCtx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(serviceData),
+                    datasets: [{
+                        label: 'Attack Events',
+                        data: Object.values(serviceData),
+                        backgroundColor: '#06B6D4',
+                        borderRadius: 8,
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#374151' },
+                            ticks: { color: '#9CA3AF' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#9CA3AF' }
+                        }
+                    }
+                }
+            });
+
+            // Severity Chart
+            const severityCtx = document.getElementById('severityChart').getContext('2d');
+            const severityData = stats.events_by_severity || {};
+            
+            if (severityChart) {
+                severityChart.destroy();
+            }
+            
+            severityChart = new Chart(severityCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(severityData),
+                    datasets: [{
+                        data: Object.values(severityData),
+                        backgroundColor: ['#10B981', '#FBBF24', '#F97316', '#EF4444'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { 
+                                color: '#9CA3AF',
+                                padding: 15,
+                                font: { size: 12 }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateTable(events) {
+            const tbody = document.getElementById('eventsBody');
+            
+            if (events.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-gray-500">No events found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = events.map(event => `
+                <tr class="border-b border-gray-700 hover:bg-gray-750 transition">
+                    <td class="p-3 text-sm">${formatTimestamp(event.timestamp)}</td>
+                    <td class="p-3">
+                        <span class="bg-blue-600 px-3 py-1 rounded-full text-xs font-semibold">
+                            ${event.service}
+                        </span>
+                    </td>
+                    <td class="p-3 font-mono text-sm text-cyan-300">${event.source_ip}</td>
+                    <td class="p-3 text-sm">${event.username || 'N/A'}</td>
+                    <td class="p-3">
+                        <span class="font-bold ${getSeverityColor(event.severity)}">
+                            ${event.severity}
+                        </span>
+                    </td>
+                    <td class="p-3">
+                        <span class="${getAIBadge(event.ai_label)} px-3 py-1 rounded-full text-xs font-semibold">
+                            ${event.ai_label}
+                        </span>
+                    </td>
+                    <td class="p-3 text-sm font-mono">${event.threat_score?.toFixed(2) || '0.00'}</td>
+                </tr>
+            `).join('');
+        }
+
+        // ============ LIVE EVENT STREAMING ============
+        function startLiveEventStream() {
+            try {
+                const eventSource = new EventSource(`${API_URL}/api/events/stream`);
+                
+                eventSource.onmessage = function(event) {
+                    try {
+                        const newEvent = JSON.parse(event.data);
+                        addLiveEvent(newEvent);
+                        updateRiskMetrics(newEvent);
+                    } catch (e) {
+                        console.error('Parse error:', e);
+                    }
+                };
+                
+                eventSource.onerror = function() {
+                    console.error('Event stream error');
+                    eventSource.close();
+                };
+            } catch (error) {
+                console.error('Stream error:', error);
+            }
+        }
+
+        // Add event to live feed
+        function addLiveEvent(event) {
+            const liveEventsDiv = document.getElementById('liveEvents');
+            
+            // Remove "Waiting" message if exists
+            const waitingMsg = liveEventsDiv.querySelector('.text-gray-500');
+            if (waitingMsg) waitingMsg.remove();
+            
+            // Create event card
+            const eventCard = document.createElement('div');
+            eventCard.className = `p-3 rounded border-l-4 bg-gray-900 animate-pulse ${getSeverityBorder(event.severity)}`;
+            eventCard.innerHTML = `
+                <div class="flex justify-between items-start">
+                    <div class="flex-1">
+                        <div class="font-bold text-sm">
+                            <span class="${getSeverityColor(event.severity)}">${event.severity}</span>
+                            <span class="text-gray-400 ml-2">${event.service}</span>
+                        </div>
+                        <div class="text-xs text-gray-400 mt-1">
+                            IP: <span class="text-cyan-300 font-mono">${event.source_ip}</span>
+                        </div>
+                        <div class="text-xs text-gray-400">
+                            User: <span class="font-mono">${event.username || 'N/A'}</span>
+                        </div>
+                        <div class="text-xs text-gray-400">
+                            AI: <span class="${getAIColor(event.ai_label)} font-bold">${event.ai_label}</span>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-xs text-gray-500">${new Date().toLocaleTimeString()}</div>
+                        <div class="text-sm font-bold text-orange-400 mt-1">Risk: ${(event.threat_score * 100).toFixed(0)}%</div>
+                    </div>
+                </div>
+            `;
+            
+            // Add to top of feed
+            liveEventsDiv.insertBefore(eventCard, liveEventsDiv.firstChild);
+            
+            // Keep only last 10 events
+            while (liveEventsDiv.children.length > 10) {
+                liveEventsDiv.removeChild(liveEventsDiv.lastChild);
+            }
+        }
+
+        // Update risk metrics
+        function updateRiskMetrics(event) {
+            riskHistory.push({
+                time: new Date(),
+                risk: event.threat_score,
+                severity: event.severity
+            });
+            
+            // Keep last 24 entries
+            if (riskHistory.length > 24) {
+                riskHistory.shift();
+            }
+            
+            // Calculate metrics
+            const avgRisk = (riskHistory.reduce((sum, item) => sum + item.risk, 0) / riskHistory.length * 100).toFixed(1);
+            const criticalCount = riskHistory.filter(item => item.severity === 'CRITICAL').length;
+            const lastRisk = (riskHistory[riskHistory.length - 1]?.risk * 100).toFixed(0);
+            
+            const riskMetricsDiv = document.getElementById('riskMetrics');
+            riskMetricsDiv.innerHTML = `
+                <div class="bg-gray-900 p-4 rounded border-l-4 border-red-500">
+                    <div class="text-red-400 text-sm font-bold">Average Risk Level</div>
+                    <div class="text-3xl font-bold text-red-400">${avgRisk}%</div>
+                </div>
+                <div class="bg-gray-900 p-4 rounded border-l-4 border-orange-500">
+                    <div class="text-orange-400 text-sm font-bold">Critical Events</div>
+                    <div class="text-3xl font-bold text-orange-400">${criticalCount}</div>
+                </div>
+                <div class="bg-gray-900 p-4 rounded border-l-4 border-yellow-500">
+                    <div class="text-yellow-400 text-sm font-bold">Last Event Risk</div>
+                    <div class="text-3xl font-bold text-yellow-400">${lastRisk}%</div>
+                </div>
+                <div class="bg-gray-900 p-4 rounded border-l-4 border-cyan-500">
+                    <div class="text-cyan-400 text-sm font-bold">Total Tracked</div>
+                    <div class="text-3xl font-bold text-cyan-400">${riskHistory.length}</div>
+                </div>
+            `;
+        }
+
+        // Helper functions
+        function getSeverityBorder(severity) {
+            const borders = {
+                'LOW': 'border-green-500',
+                'MEDIUM': 'border-yellow-500',
+                'HIGH': 'border-orange-500',
+                'CRITICAL': 'border-red-500'
+            };
+            return borders[severity] || 'border-gray-500';
+        }
+
+        function getAIColor(label) {
+            const colors = {
+                'benign': 'text-green-400',
+                'anomaly': 'text-yellow-400',
+                'malicious': 'text-red-400'
+            };
+            return colors[label] || 'text-gray-400';
+        }
+
+        function formatTimestamp(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleString('en-IN', { 
+                dateStyle: 'short', 
+                timeStyle: 'medium' 
+            });
+        }
+
+        function getSeverityColor(severity) {
+            const colors = {
+                'LOW': 'text-green-400',
+                'MEDIUM': 'text-yellow-400',
+                'HIGH': 'text-orange-400',
+                'CRITICAL': 'text-red-400'
+            };
+            return colors[severity] || 'text-gray-400';
+        }
+
+        function getAIBadge(label) {
+            const badges = {
+                'benign': 'bg-green-600 text-green-100',
+                'anomaly': 'bg-yellow-600 text-yellow-100',
+                'malicious': 'bg-red-600 text-red-100'
+            };
+            return badges[label] || 'bg-gray-600 text-gray-100';
+        }
+    </script>
+</body>
+</html>

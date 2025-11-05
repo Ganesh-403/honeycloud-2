@@ -1,0 +1,32 @@
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+
+  frontend:
+    image: nginx:alpine
+    ports:
+      - "5173:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+    depends_on:
+      - backend
+
+  launcher:
+    image: alpine:latest
+    depends_on:
+      - frontend
+      - backend
+    command: >
+      sh -c "
+      echo '🚀 HoneyCloud-X Started Successfully!';
+      echo '📊 Admin Dashboard: http://localhost:5173/admin.html';
+      echo '📈 Main Dashboard: http://localhost:5173/dashboard.html';
+      echo '📚 API Docs: http://localhost:8000/docs';
+      sleep infinity
+      "
